@@ -1,7 +1,0 @@
-api:
-  base-path: /api/v1
-spring:
-  security:
-    user:
-      name: admin
-      password: admin
