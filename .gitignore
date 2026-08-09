@@ -33,5 +33,4 @@ build/
 .vscode/
 
 ### Spring Boot secrets ###
-src/main/resources/application.yaml
 src/main/resources/passwords.properties

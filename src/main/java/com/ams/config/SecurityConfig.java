@@ -3,6 +3,7 @@ package com.ams.config;
 import com.ams.security.JwtAuthenticationEntryPoint;
 import com.ams.security.JwtAuthenticationFilter;
 import com.ams.repository.UserRepository;
+import com.ams.security.OAuth2SuccessHandler;
 import com.ams.service.MyUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +31,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -37,9 +39,13 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                apiBasePath + "/auth/**"
+                                apiBasePath + "/auth/**",
+                                apiBasePath + "/oauth2/**"
                         ).permitAll()
                         .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth -> oauth
+                        .successHandler(oAuth2SuccessHandler)
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(
