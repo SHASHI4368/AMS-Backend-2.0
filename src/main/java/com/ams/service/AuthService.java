@@ -1,6 +1,7 @@
 package com.ams.service;
 
-import com.ams.dto.SignUpRequest;
+import com.ams.dto.AuthRequest;
+import com.ams.dto.LoginResponse;
 import com.ams.dto.VerifyEmailRequest;
 import com.ams.entity.EmailVerificationCode;
 import com.ams.entity.User;
@@ -8,8 +9,11 @@ import com.ams.exception.ServiceException;
 import com.ams.repository.EmailVerificationCodeRepository;
 import com.ams.repository.UserRepository;
 import com.ams.role.Role;
+import com.ams.util.JwtUtil;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,19 +29,21 @@ public class AuthService implements IAuthService {
     private final EmailVerificationCodeRepository emailVerificationCodeRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
 
     @Override
     @Transactional
-    public void signup(SignUpRequest signUpRequest) {
+    public void signup(AuthRequest authRequest) {
         // 1. Check if email already exists
-        if (userRepository.existsByEmail(signUpRequest.email())) {
+        if (userRepository.existsByEmail(authRequest.email())) {
             throw new ServiceException("Email already exists");
         }
 
         // 2. create new user
         User user = User.builder()
-                .email(signUpRequest.email())
-                .password(passwordEncoder.encode(signUpRequest.password()))
+                .email(authRequest.email())
+                .password(passwordEncoder.encode(authRequest.password()))
                 .role(Role.USER)
                 .emailVerified(false)
                 .build();
@@ -117,5 +123,26 @@ public class AuthService implements IAuthService {
         // 7. Delete verification record
         emailVerificationCodeRepository.delete(verificationRecord);
 
+    }
+
+    @Override
+    public LoginResponse login(AuthRequest authRequest) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        authRequest.email(),
+                        authRequest.password()
+                )
+        );
+        User user = userRepository
+                .findByEmail(authRequest.email())
+                .orElseThrow(() ->
+                        new ServiceException("User not found")
+                );
+        String token = jwtUtil.generateJwtToken(user.getEmail());
+        return new LoginResponse(
+                token,
+                user.getEmail(),
+                user.getRole().name()
+        );
     }
 }

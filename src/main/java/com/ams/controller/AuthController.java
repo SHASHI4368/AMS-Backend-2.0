@@ -1,12 +1,14 @@
 package com.ams.controller;
 
 import com.ams.dto.ApiResponse;
-import com.ams.dto.SignUpRequest;
+import com.ams.dto.AuthRequest;
+import com.ams.dto.LoginResponse;
 import com.ams.dto.VerifyEmailRequest;
 import com.ams.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,9 +25,9 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> signUp(
             @Valid
             @RequestBody
-            SignUpRequest signUpRequest
+            AuthRequest authRequest
     ) {
-        authService.signup(signUpRequest);
+        authService.signup(authRequest);
         return ResponseEntity.ok(
                 new ApiResponse<>(
                         true,
@@ -47,6 +49,22 @@ public class AuthController {
                         true,
                         "Email verified successfully",
                         null
+                )
+        );
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<LoginResponse>> login(
+            @Valid
+            @RequestBody
+            AuthRequest authRequest
+    ) {
+        LoginResponse response = authService.login(authRequest);
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Login successful",
+                        response
                 )
         );
     }
