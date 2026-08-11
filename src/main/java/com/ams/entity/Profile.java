@@ -21,6 +21,7 @@ public class Profile {
     private String lastName;
     private String avatarUrl;
     private String telephone;
+    private String timezone;
 
     @Size(max = 500)
     @Column(columnDefinition = "TEXT")

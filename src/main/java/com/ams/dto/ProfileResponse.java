@@ -9,6 +9,7 @@ public record ProfileResponse(
         String avatarUrl,
         String phoneNumber,
         String gender,
-        String bio
+        String bio,
+        String timezone
 ) {
 }
