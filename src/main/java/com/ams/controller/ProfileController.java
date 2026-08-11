@@ -1,8 +1,8 @@
 package com.ams.controller;
 
 import com.ams.dto.ApiResponse;
-import com.ams.dto.LoginResponse;
-import com.ams.service.UserService;
+import com.ams.dto.ProfileResponse;
+import com.ams.service.ProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -11,22 +11,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("${api.base-path}/users")
+@RequestMapping("${api.base-path}/profile")
 @RequiredArgsConstructor
-public class UserController {
-    private final UserService userService;
+public class ProfileController {
+    private final ProfileService profileService;
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<LoginResponse>> getCurrentUser(
+    public ResponseEntity<ApiResponse<ProfileResponse>> getCurrentUser(
             Authentication authentication
     ) {
         System.out.println(authentication.getName());
-        LoginResponse loginResponse = userService.getCurrentUser(authentication.getName());
+        ProfileResponse loginResponse = profileService.getCurrentUserProfile(authentication.getName());
 
         return ResponseEntity.ok(
                 new ApiResponse<>(
                         true,
-                        "Current user fetched successfully",
+                        "Current user profile fetched successfully",
                         loginResponse
                 )
         );

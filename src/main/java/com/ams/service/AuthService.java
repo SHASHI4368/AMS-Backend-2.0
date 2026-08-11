@@ -4,11 +4,13 @@ import com.ams.dto.AuthRequest;
 import com.ams.dto.LoginResponse;
 import com.ams.dto.VerifyEmailRequest;
 import com.ams.entity.EmailVerificationCode;
+import com.ams.entity.Profile;
 import com.ams.entity.User;
 import com.ams.exception.ServiceException;
 import com.ams.repository.EmailVerificationCodeRepository;
+import com.ams.repository.ProfileRepository;
 import com.ams.repository.UserRepository;
-import com.ams.role.Role;
+import com.ams.enums.Role;
 import com.ams.util.JwtUtil;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.Cookie;
@@ -28,6 +30,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class AuthService implements IAuthService {
     private final UserRepository userRepository;
+    private final ProfileRepository profileRepository;
     private final SecureRandom secureRandom = new SecureRandom();
     private final EmailVerificationCodeRepository emailVerificationCodeRepository;
     private final EmailService emailService;
@@ -150,7 +153,19 @@ public class AuthService implements IAuthService {
         user.setEmailVerified(true);
         userRepository.save(user);
 
-        // 7. Delete verification record
+        // 7. Create profile for the user
+        Profile profile = Profile.builder()
+                .user(user)
+                .firstName("")
+                .lastName("")
+                .avatarUrl("")
+                .telephone("")
+                .gender(null)
+                .bio("")
+                .build();
+        profileRepository.save(profile);
+
+        // 8. Delete verification record
         emailVerificationCodeRepository.delete(verificationRecord);
 
     }
@@ -178,8 +193,6 @@ public class AuthService implements IAuthService {
         return new LoginResponse(
                 user.getId(),
                 user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
                 user.getRole().name()
         );
     }

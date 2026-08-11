@@ -1,6 +1,6 @@
 package com.ams.entity;
 
-import com.ams.role.Role;
+import com.ams.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.jspecify.annotations.Nullable;
@@ -24,8 +24,6 @@ public class User implements UserDetails {
     private Long id;
     @Column(unique = true, nullable = false)
     private String email;
-    private String firstName;
-    private String lastName;
     private String password;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -1,8 +1,10 @@
 package com.ams.security;
 
+import com.ams.entity.Profile;
 import com.ams.entity.User;
+import com.ams.repository.ProfileRepository;
 import com.ams.repository.UserRepository;
-import com.ams.role.Role;
+import com.ams.enums.Role;
 import com.ams.util.JwtUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -21,6 +23,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     private final UserRepository userRepository;
+    private final ProfileRepository profileRepository;
     private final JwtUtil jwtUtil;
 
 
@@ -37,19 +40,26 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         String email = oAuth2User.getAttribute("email");
         String firstName = oAuth2User.getAttribute("given_name");
         String lastName = oAuth2User.getAttribute("family_name");
+        String avatarUrl = oAuth2User.getAttribute("picture");
 
         User user = userRepository.findByEmail(email)
                 .orElseGet(() -> {
-
                     User newUser = User.builder()
                             .email(email)
                             .role(Role.USER)
-                            .firstName(firstName)
-                            .lastName(lastName)
                             .emailVerified(true)
                             .build();
 
-                    return userRepository.save(newUser);
+                    userRepository.save(newUser);
+
+                    Profile newProfile = Profile.builder()
+                            .user(newUser)
+                            .firstName(firstName)
+                            .lastName(lastName)
+                            .avatarUrl(avatarUrl)
+                            .build();
+                    profileRepository.save(newProfile);
+                    return newUser;
                 });
         String jwt = jwtUtil.generateJwtToken(user.getEmail());
 

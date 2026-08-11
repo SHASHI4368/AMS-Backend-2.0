@@ -1,4 +1,4 @@
-package com.ams.role;
+package com.ams.enums;
 
 public enum Role {
     USER,
