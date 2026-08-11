@@ -4,6 +4,7 @@ import com.ams.service.MyUserDetailsService;
 import com.ams.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -28,39 +29,59 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
-        // 1. Get the Authorization header from the request
-        String authorizationHeader = request.getHeader("Authorization");
+        // 1. Get the jwt from the cookie
+        String token = extractToken(request);
 
-        // 2. Check if the header is present and starts with "Bearer "
-        if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            // 3. Extract the token from the header
-            String token = authorizationHeader.substring(7);
+        // 2. Check if the token is null or user is already authenticated
+        if(token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            try{
+                // 3. Get the email from the token
+                String email = jwtUtil.extractEmail(token);
 
-            // 4. Extract the email from the token
-            String email = jwtUtil.extractEmail(token);
+                // 4. Get the user from the UserDetailsService
+                if(email != null){
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-            // 5. Check if the email is not null and the user is not already authenticated
-            if(email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // 6. Load the user details using the email
-                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                    // 5. Validate the user
+                    if(jwtUtil.validateToken(token, email, userDetails)){
+                        // 6. Create the principal object
+                        UsernamePasswordAuthenticationToken authenticationToken =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities()
+                                );
+                        authenticationToken.setDetails(
+                                new WebAuthenticationDetailsSource()
+                                        .buildDetails(request)
+                        );
 
-                // 7. Validate the token
-                if(jwtUtil.validateToken(token, email, userDetails)) {
-                    // 8. Create an authentication token
-                    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities()
-                    );
-
-                    // 9. Set the details of the authentication token
-                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                    // 10. Set the authentication in the security context
-                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-
+                        SecurityContextHolder
+                                .getContext()
+                                .setAuthentication(authenticationToken);
+                    }
                 }
+
+            }catch (Exception e){
+
             }
         }
-        // 11. Continue the filter chain
+
+
+        // 7. Continue the filter chain
         filterChain.doFilter(request, response);
+    }
+
+    private String extractToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if(cookies == null) {
+            return null;
+        }
+        for(Cookie cookie : cookies) {
+            if("jwt".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 }

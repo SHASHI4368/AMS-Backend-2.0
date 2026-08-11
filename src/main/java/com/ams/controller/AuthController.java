@@ -1,10 +1,9 @@
 package com.ams.controller;
 
-import com.ams.dto.ApiResponse;
-import com.ams.dto.AuthRequest;
-import com.ams.dto.LoginResponse;
-import com.ams.dto.VerifyEmailRequest;
+import com.ams.dto.*;
 import com.ams.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +21,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<Void>> signUp(
+    public ResponseEntity<ApiResponse<SignupResponse>> signUp(
             @Valid
             @RequestBody
             AuthRequest authRequest
@@ -32,7 +31,7 @@ public class AuthController {
                 new ApiResponse<>(
                         true,
                         "Signup successfull. Please check your email for the verification code",
-                        null
+                        new SignupResponse(authRequest.email())
                 )
         );
     }
@@ -57,14 +56,15 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponse>> login(
             @Valid
             @RequestBody
-            AuthRequest authRequest
+            AuthRequest authRequest,
+            HttpServletResponse response
     ) {
-        LoginResponse response = authService.login(authRequest);
+        LoginResponse loginResponse = authService.login(authRequest, response);
         return ResponseEntity.ok(
                 new ApiResponse<>(
                         true,
                         "Login successful",
-                        response
+                        loginResponse
                 )
         );
     }

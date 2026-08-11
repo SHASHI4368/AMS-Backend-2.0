@@ -11,7 +11,10 @@ import com.ams.repository.UserRepository;
 import com.ams.role.Role;
 import com.ams.util.JwtUtil;
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,12 +35,39 @@ public class AuthService implements IAuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
 
+    @Value("${jwt.expiration}")
+    private int maxAge;
+
     @Override
     @Transactional
     public void signup(AuthRequest authRequest) {
-        // 1. Check if email already exists
+        // 1. Check if email already exists and email is verified
         if (userRepository.existsByEmail(authRequest.email())) {
-            throw new ServiceException("Email already exists");
+            User existingUser = userRepository.findByEmail(authRequest.email()).orElseThrow(
+                    () -> new ServiceException("User not found")
+            );
+            if (existingUser.isEmailVerified()) {
+                throw new ServiceException("Email already exists and is verified");
+            }
+            EmailVerificationCode existingVerificationRecord = emailVerificationCodeRepository
+                    .findByUser(existingUser)
+                    .orElseThrow(() ->
+                            new ServiceException("Verification record not found")
+                    );
+            String newVerificationCode = generateVerificationCode();
+            existingVerificationRecord.setCode(passwordEncoder.encode(newVerificationCode));
+            existingVerificationRecord.setCreatedAt(LocalDateTime.now());
+            existingVerificationRecord.setExpiresAt(LocalDateTime.now().plusMinutes(10));
+            emailVerificationCodeRepository.save(existingVerificationRecord);
+            try {
+                emailService.sendVerificationEmail(
+                        existingUser.getEmail(),
+                        newVerificationCode
+                );
+                return;
+            } catch (MessagingException e) {
+                throw new ServiceException("Failed to send verification email: " + e.getMessage());
+            }
         }
 
         // 2. create new user
@@ -126,7 +156,7 @@ public class AuthService implements IAuthService {
     }
 
     @Override
-    public LoginResponse login(AuthRequest authRequest) {
+    public LoginResponse login(AuthRequest authRequest, HttpServletResponse response) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         authRequest.email(),
@@ -138,10 +168,18 @@ public class AuthService implements IAuthService {
                 .orElseThrow(() ->
                         new ServiceException("User not found")
                 );
-        String token = jwtUtil.generateJwtToken(user.getEmail());
+        String jwt = jwtUtil.generateJwtToken(user.getEmail());
+        Cookie jwtCookie = new Cookie("jwt", jwt);
+        jwtCookie.setHttpOnly(true);
+        jwtCookie.setPath("/");
+        jwtCookie.setMaxAge(maxAge);
+        response.addCookie(jwtCookie);
+
         return new LoginResponse(
-                token,
+                user.getId(),
                 user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
                 user.getRole().name()
         );
     }
