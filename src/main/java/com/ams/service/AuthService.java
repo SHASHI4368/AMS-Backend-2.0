@@ -79,6 +79,7 @@ public class AuthService implements IAuthService {
                 .password(passwordEncoder.encode(authRequest.password()))
                 .role(Role.USER)
                 .emailVerified(false)
+                .createdAt(LocalDateTime.now())
                 .build();
 
         // 3. save user to database
@@ -151,6 +152,7 @@ public class AuthService implements IAuthService {
 
         // 6. Mark user as verified
         user.setEmailVerified(true);
+        user.setVerifiedAt(LocalDateTime.now());
         userRepository.save(user);
 
         // 7. Create profile for the user

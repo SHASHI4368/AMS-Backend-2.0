@@ -20,7 +20,6 @@ public class ProfileController {
     public ResponseEntity<ApiResponse<ProfileResponse>> getCurrentUser(
             Authentication authentication
     ) {
-        System.out.println(authentication.getName());
         ProfileResponse loginResponse = profileService.getCurrentUserProfile(authentication.getName());
 
         return ResponseEntity.ok(

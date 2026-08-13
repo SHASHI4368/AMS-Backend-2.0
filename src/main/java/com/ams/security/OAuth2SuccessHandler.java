@@ -18,6 +18,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
@@ -48,6 +49,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                             .email(email)
                             .role(Role.USER)
                             .emailVerified(true)
+                            .createdAt(LocalDateTime.now())
+                            .verifiedAt(LocalDateTime.now())
                             .build();
 
                     userRepository.save(newUser);
