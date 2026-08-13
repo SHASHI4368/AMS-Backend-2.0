@@ -3,6 +3,7 @@ package com.ams.controller;
 import com.ams.dto.ApiResponse;
 import com.ams.dto.OrganizationRequest;
 import com.ams.dto.OrganizationResponse;
+import com.ams.dto.UpdateOrganizationRequest;
 import com.ams.service.OrganizationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -63,6 +64,26 @@ public class OrganizationController {
                 new ApiResponse<>(
                         true,
                         "Organization fetched successfully",
+                        response
+                )
+        );
+    }
+
+    @PutMapping("/{organizationId}")
+    public ResponseEntity<ApiResponse<OrganizationResponse>> updateOrganization(
+            @PathVariable("organizationId") Long organizationId,
+            @RequestBody
+            @Valid
+            UpdateOrganizationRequest request,
+            Authentication authentication
+    ){
+        OrganizationResponse response = organizationService
+                .updateOrganization(authentication.getName(), organizationId, request);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Organization updated successfully",
                         response
                 )
         );

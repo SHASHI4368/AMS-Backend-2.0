@@ -2,6 +2,7 @@ package com.ams.service;
 
 import com.ams.dto.OrganizationRequest;
 import com.ams.dto.OrganizationResponse;
+import com.ams.dto.UpdateOrganizationRequest;
 import com.ams.entity.Membership;
 import com.ams.entity.Organization;
 import com.ams.entity.User;
@@ -64,6 +65,7 @@ public class OrganizationService implements IOrganizationService {
     }
 
     @Override
+    @Transactional
     public List<OrganizationResponse> getMyOrganizations(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
@@ -90,6 +92,7 @@ public class OrganizationService implements IOrganizationService {
     }
 
     @Override
+    @Transactional
     public OrganizationResponse getOrganizationById(String email, Long organizationId) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
@@ -123,6 +126,43 @@ public class OrganizationService implements IOrganizationService {
                 organization.getCreatedAt(),
                 organization.getMemberCount(),
                 membership.getRole().name()
+        );
+    }
+
+    @Override
+    @Transactional
+    public OrganizationResponse updateOrganization(String email, Long organizationId, UpdateOrganizationRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ServiceException("User not found with email: " + email)
+                );
+
+        Organization organization = organizationRepository.findById(organizationId)
+                .orElseThrow(() ->
+                        new ServiceException("Organization not found with id: " + organizationId)
+                );
+
+        // Check if the user has permission to update the organization
+        if(!organization.getOwner().getEmail().equals(email)) {
+            throw new ServiceException(
+                    "You do not have permission to update this organization with id: " + organizationId
+            );
+        }
+
+        organization.setName(request.name());
+        organization.setDescription(request.description());
+        organization.setLogoUrl(request.logoUrl());
+
+        organizationRepository.save(organization);
+
+        return new OrganizationResponse(
+                organization.getId(),
+                organization.getName(),
+                organization.getDescription(),
+                organization.getLogoUrl(),
+                organization.getCreatedAt(),
+                organization.getMemberCount(),
+                OrganizationRole.OWNER.name()
         );
     }
 }
