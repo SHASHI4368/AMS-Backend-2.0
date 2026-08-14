@@ -1,8 +1,8 @@
 package com.ams.service;
 
-import com.ams.dto.AuthRequest;
-import com.ams.dto.LoginResponse;
-import com.ams.dto.VerifyEmailRequest;
+import com.ams.dto.auth.AuthRequest;
+import com.ams.dto.auth.LoginResponse;
+import com.ams.dto.auth.VerifyEmailRequest;
 import com.ams.entity.EmailVerificationCode;
 import com.ams.entity.Profile;
 import com.ams.entity.User;

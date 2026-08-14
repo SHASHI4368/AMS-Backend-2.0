@@ -1,4 +1,4 @@
-package com.ams.dto;
+package com.ams.dto.auth;
 
 public record LoginResponse(
         Long id,

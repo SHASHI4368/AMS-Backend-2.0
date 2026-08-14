@@ -1,8 +1,10 @@
 package com.ams.service;
 
-import com.ams.dto.OrganizationRequest;
-import com.ams.dto.OrganizationResponse;
-import com.ams.dto.UpdateOrganizationRequest;
+import com.ams.dto.PageResponse;
+import com.ams.dto.organization.OrganizationListResponse;
+import com.ams.dto.organization.OrganizationRequest;
+import com.ams.dto.organization.OrganizationResponse;
+import com.ams.dto.organization.UpdateOrganizationRequest;
 import com.ams.entity.Membership;
 import com.ams.entity.Organization;
 import com.ams.entity.User;
@@ -13,6 +15,10 @@ import com.ams.repository.MembershipRepository;
 import com.ams.repository.OrganizationRepository;
 import com.ams.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -164,5 +170,66 @@ public class OrganizationService implements IOrganizationService {
                 organization.getMemberCount(),
                 OrganizationRole.OWNER.name()
         );
+    }
+
+    @Override
+    @Transactional
+    public PageResponse<OrganizationListResponse> getAllOrganizations(String email, int page, int size, String name) {
+        // Check if the user exists
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ServiceException("User not found with email: " + email)
+                );
+
+        // Fetch all organizations with pagination
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Organization> organizationPage = organizationRepository.findByNameContainingIgnoreCase(name, pageable);
+        List<Organization> organizations = organizationPage.getContent();
+
+        // If no organizations found, return empty response
+        if (organizations.isEmpty()) {
+            return new PageResponse<>(
+                    List.of(),
+                    organizationPage.getNumber(),
+                    organizationPage.getSize(),
+                    organizationPage.getTotalElements(),
+                    organizationPage.getTotalPages(),
+                    organizationPage.isLast()
+            );
+        }
+
+        // Map organizations to OrganizationResponse
+        List<OrganizationListResponse> content = organizations.stream()
+                .map(org -> {
+                    // Check if the user is a member of the organization
+                    Membership membership = membershipRepository
+                            .findByUserAndOrganization(user, org)
+                            .orElse(null);
+
+                    String role = membership != null ? membership.getRole().name() : null;
+
+                    return new OrganizationListResponse(
+                            org.getId(),
+                            org.getName(),
+                            org.getDescription(),
+                            org.getLogoUrl(),
+                            org.getCreatedAt(),
+                            org.getMemberCount(),
+                            role,
+                            membership != null
+                    );
+                })
+                .toList();
+
+        return new PageResponse<>(
+                content,
+                organizationPage.getNumber(),
+                organizationPage.getSize(),
+                organizationPage.getTotalElements(),
+                organizationPage.getTotalPages(),
+                organizationPage.isLast()
+        );
+
+
     }
 }

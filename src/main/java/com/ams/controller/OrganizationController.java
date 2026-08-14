@@ -1,9 +1,11 @@
 package com.ams.controller;
 
 import com.ams.dto.ApiResponse;
-import com.ams.dto.OrganizationRequest;
-import com.ams.dto.OrganizationResponse;
-import com.ams.dto.UpdateOrganizationRequest;
+import com.ams.dto.PageResponse;
+import com.ams.dto.organization.OrganizationListResponse;
+import com.ams.dto.organization.OrganizationRequest;
+import com.ams.dto.organization.OrganizationResponse;
+import com.ams.dto.organization.UpdateOrganizationRequest;
 import com.ams.service.OrganizationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -84,6 +86,25 @@ public class OrganizationController {
                 new ApiResponse<>(
                         true,
                         "Organization updated successfully",
+                        response
+                )
+        );
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<PageResponse<OrganizationListResponse>>> getAllOrganizations(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "name", required = false, defaultValue = "") String name,
+            Authentication authentication
+    ){
+        PageResponse<OrganizationListResponse> response = organizationService
+                .getAllOrganizations(authentication.getName(), page, size, name);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Organizations fetched successfully",
                         response
                 )
         );

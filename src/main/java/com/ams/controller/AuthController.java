@@ -1,13 +1,18 @@
 package com.ams.controller;
 
 import com.ams.dto.*;
+import com.ams.dto.auth.AuthRequest;
+import com.ams.dto.auth.LoginResponse;
+import com.ams.dto.auth.SignupResponse;
+import com.ams.dto.auth.VerifyEmailRequest;
 import com.ams.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -65,6 +70,34 @@ public class AuthController {
                         true,
                         "Login successful",
                         loginResponse
+                )
+        );
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        ResponseCookie cookie = ResponseCookie
+                .from("jwt", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Lax")
+                .build();
+
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                cookie.toString()
+        );
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Logout successful",
+                        null
                 )
         );
     }

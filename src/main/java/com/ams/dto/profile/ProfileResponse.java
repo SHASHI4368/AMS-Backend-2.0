@@ -1,4 +1,4 @@
-package com.ams.dto;
+package com.ams.dto.profile;
 
 public record ProfileResponse(
         Long id,

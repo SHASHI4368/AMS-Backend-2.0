@@ -1,4 +1,4 @@
-package com.ams.dto;
+package com.ams.dto.profile;
 
 import com.ams.enums.Gender;
 

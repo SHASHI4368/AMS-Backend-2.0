@@ -1,4 +1,4 @@
-package com.ams.dto;
+package com.ams.dto.organization;
 
 
 import java.time.LocalDateTime;

@@ -1,8 +1,8 @@
 package com.ams.service;
 
-import com.ams.dto.AuthRequest;
-import com.ams.dto.LoginResponse;
-import com.ams.dto.VerifyEmailRequest;
+import com.ams.dto.auth.AuthRequest;
+import com.ams.dto.auth.LoginResponse;
+import com.ams.dto.auth.VerifyEmailRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 public interface IAuthService {

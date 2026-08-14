@@ -1,8 +1,8 @@
 package com.ams.controller;
 
 import com.ams.dto.ApiResponse;
-import com.ams.dto.ProfileResponse;
-import com.ams.dto.ProfileUpdateRequest;
+import com.ams.dto.profile.ProfileResponse;
+import com.ams.dto.profile.ProfileUpdateRequest;
 import com.ams.service.ProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

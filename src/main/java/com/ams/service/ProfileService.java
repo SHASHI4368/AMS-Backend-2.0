@@ -1,7 +1,7 @@
 package com.ams.service;
 
-import com.ams.dto.ProfileResponse;
-import com.ams.dto.ProfileUpdateRequest;
+import com.ams.dto.profile.ProfileResponse;
+import com.ams.dto.profile.ProfileUpdateRequest;
 import com.ams.entity.Profile;
 import com.ams.entity.User;
 import com.ams.repository.ProfileRepository;
