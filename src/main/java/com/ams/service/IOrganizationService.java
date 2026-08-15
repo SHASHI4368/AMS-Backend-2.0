@@ -5,6 +5,7 @@ import com.ams.dto.organization.OrganizationListResponse;
 import com.ams.dto.organization.OrganizationRequest;
 import com.ams.dto.organization.OrganizationResponse;
 import com.ams.dto.organization.UpdateOrganizationRequest;
+import com.ams.enums.OrganizationAction;
 
 import java.util.List;
 
@@ -14,4 +15,6 @@ public interface IOrganizationService {
     OrganizationResponse getOrganizationById(String email, Long organizationId);
     OrganizationResponse updateOrganization(String email, Long organizationId, UpdateOrganizationRequest request);
     PageResponse<OrganizationListResponse> getAllOrganizations(String email, int page, int size, String name);
+    void requestToJoinOrganization(String email, Long organizationId, String note);
+    void processEmailAction(String rawToken, OrganizationAction expectedAction);
 }

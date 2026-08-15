@@ -47,7 +47,8 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                apiBasePath + "/auth/**"
+                                apiBasePath + "/auth/**",
+                                apiBasePath + "/organization-email-actions/**"
                         ).permitAll()
 
                         .requestMatchers(

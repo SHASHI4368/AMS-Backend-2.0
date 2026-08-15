@@ -2,10 +2,7 @@ package com.ams.controller;
 
 import com.ams.dto.ApiResponse;
 import com.ams.dto.PageResponse;
-import com.ams.dto.organization.OrganizationListResponse;
-import com.ams.dto.organization.OrganizationRequest;
-import com.ams.dto.organization.OrganizationResponse;
-import com.ams.dto.organization.UpdateOrganizationRequest;
+import com.ams.dto.organization.*;
 import com.ams.service.OrganizationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -106,6 +103,30 @@ public class OrganizationController {
                         true,
                         "Organizations fetched successfully",
                         response
+                )
+        );
+    }
+
+    @PostMapping("/{organizationId}/join")
+    public ResponseEntity<ApiResponse<Void>> requestToJoin(
+            @PathVariable
+            Long organizationId,
+            @RequestBody
+            JoinRequest request,
+            Authentication authentication
+    ) {
+
+        organizationService.requestToJoinOrganization(
+                authentication.getName(),
+                organizationId,
+                request.note()
+        );
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Join request sent successfully",
+                        null
                 )
         );
     }
