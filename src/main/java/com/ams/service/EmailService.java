@@ -19,15 +19,30 @@ public class EmailService implements  IEmailService {
     @Value("${api.backend-url}")
     private String backendUrl;
 
-    @Override
-    public void sendVerificationEmail(String to, String code) throws MessagingException {
+    private void sendEmail(
+            String to,
+            String subject,
+            String htmlContent
+    ) throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
 
         MimeMessageHelper helper =
-                new MimeMessageHelper(message, true);
+                new MimeMessageHelper(
+                        message,
+                        true,
+                        "UTF-8"
+                );
 
         helper.setTo(to);
-        helper.setSubject("Verify your email - Appointment Management System");
+        helper.setSubject(subject);
+        helper.setText(htmlContent, true);
+
+        mailSender.send(message);
+    }
+
+
+    @Override
+    public void sendVerificationEmail(String to, String code) throws MessagingException {
 
         String html = """
                 <html>
@@ -55,10 +70,7 @@ public class EmailService implements  IEmailService {
                 </html>
                 """.formatted(code);
 
-        helper.setText(html, true);
-
-        mailSender.send(message);
-
+        sendEmail(to, "\"Verify your email - Appointment Management System\"", html);
 
     }
 
@@ -71,22 +83,6 @@ public class EmailService implements  IEmailService {
             String acceptToken,
             String rejectToken
     ) throws MessagingException {
-
-        MimeMessage message =
-                mailSender.createMimeMessage();
-
-        MimeMessageHelper helper =
-                new MimeMessageHelper(
-                        message,
-                        true,
-                        "UTF-8"
-                );
-
-        helper.setTo(ownerEmail);
-
-        helper.setSubject(
-                "New join request for " + organization.getName()
-        );
 
         String acceptUrl =
                 backendUrl +
@@ -195,8 +191,88 @@ public class EmailService implements  IEmailService {
                 rejectUrl
         );
 
-        helper.setText(html, true);
+        sendEmail(ownerEmail, "New Join Request for " + organization.getName(), html);
+    }
 
-        mailSender.send(message);
+    @Override
+    public void sendMembershipRequestResultEmail(
+            String to,
+            String organizationName,
+            boolean accepted
+    ) throws MessagingException {
+
+
+
+        String subject;
+        String title;
+        String content;
+
+        if (accepted) {
+
+            subject =
+                    "Your request to join "
+                            + organizationName
+                            + " was accepted";
+
+            title = "Join request accepted";
+
+            content = """
+                <p>
+                    Your request to join
+                    <strong>%s</strong>
+                    has been accepted.
+                </p>
+
+                <p>
+                    You are now a member of the organization.
+                </p>
+                """.formatted(organizationName);
+
+        } else {
+
+            subject =
+                    "Your request to join "
+                            + organizationName
+                            + " was rejected";
+
+            title = "Join request rejected";
+
+            content = """
+                <p>
+                    Your request to join
+                    <strong>%s</strong>
+                    has been rejected.
+                </p>
+                """.formatted(organizationName);
+        }
+
+        String html = """
+            <!DOCTYPE html>
+            <html>
+            <body style="
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                color: #333;
+            ">
+
+                <div style="
+                    max-width: 600px;
+                    margin: 30px auto;
+                    padding: 30px;
+                    border: 1px solid #ddd;
+                    border-radius: 8px;
+                ">
+
+                    <h2>%s</h2>
+
+                    %s
+
+                </div>
+
+            </body>
+            </html>
+            """.formatted(title, content);
+
+        sendEmail(to, subject, html);
     }
 }

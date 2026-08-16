@@ -34,10 +34,7 @@ public class OrganizationService implements IOrganizationService {
     private final OrganizationRepository organizationRepository;
     private final MembershipRepository membershipRepository;
     private final UserRepository userRepository;
-    private final NotificationService notificationService;
-    private final OrganizationActionTokenService organizationActionTokenService;
-    private final EmailService emailService;
-    private final OrganizationActionTokenRepository organizationActionTokenRepository;
+
 
     private User getUser(String email) {
         return userRepository.findByEmail(email)
@@ -73,6 +70,7 @@ public class OrganizationService implements IOrganizationService {
                 .organization(organization)
                 .status(MembershipStatus.ACTIVE)
                 .role(OrganizationRole.OWNER)
+                .joinedAt(LocalDateTime.now())
                 .build();
 
         membershipRepository.save(membership);
@@ -233,129 +231,5 @@ public class OrganizationService implements IOrganizationService {
 
     }
 
-    @Override
-    @Transactional
-    public void requestToJoinOrganization(String email, Long organizationId, String note) {
-        // Check if the user exists
-        User user = getUser(email);
 
-        // Check if the organization exists
-        Organization organization = getOrganization(organizationId);
-
-        // Check if the user is already a member of the organization
-        Optional<Membership> existingMembership =  membershipRepository
-                .findByUserAndOrganization(user, organization);
-
-        if (existingMembership.isPresent()) {
-            Membership membership = existingMembership.get();
-
-            if (membership.getStatus() == MembershipStatus.ACTIVE) {
-                throw new ServiceException("You are already a member of this organization with id: " + organizationId);
-            } else if (membership.getStatus() == MembershipStatus.PENDING) {
-                throw new ServiceException("Your membership request is already pending for this organization with id: " + organizationId);
-            } else if (membership.getStatus() == MembershipStatus.REJECTED) {
-                throw new ServiceException("Your membership request has been rejected for this organization with id: " + organizationId);
-            }
-        }
-
-        // Create a new membership
-        Membership membership = Membership.builder()
-                .user(user)
-                .organization(organization)
-                .status(MembershipStatus.PENDING)
-                .role(OrganizationRole.MEMBER)
-                .build();
-
-        membershipRepository.save(membership);
-
-        // Create notification for the organization owner
-        User owner = organization.getOwner();
-
-        notificationService.create(
-                owner,
-                NotificationType.ORGANIZATION_JOIN_REQUEST,
-                NotificationTargetType.ORGANIZATION,
-                organization.getId(),
-                "Organization Join Request",
-                "User " + user.getEmail() + " has requested to join your organization: " + organization.getName()
-        );
-
-        // Create emai action tokens
-        String acceptToken = organizationActionTokenService.generateToken(
-                membership,
-                OrganizationAction.ACCEPT
-        );
-
-        String rejectToken = organizationActionTokenService.generateToken(
-                membership,
-                OrganizationAction.REJECT
-        );
-
-        // Send email notification to the organization owner
-        try{
-            emailService.sendOrganizationJoinRequestEmail(
-                    owner.getEmail(),
-                    user,
-                    note,
-                    organization,
-                    acceptToken,
-                    rejectToken
-            );
-        }catch (MessagingException ex){
-            throw new ServiceException(
-                    "Failed to send email notification to the organization owner: " + ex.getMessage()
-            );
-        }
-    }
-
-    @Override
-    @Transactional
-    public void processEmailAction(String rawToken, OrganizationAction expectedAction) {
-        // Hash the raw token
-        String hashedToken = organizationActionTokenService.hashToken(rawToken);
-
-        // Check if the token exists
-        OrganizationActionToken actionToken = organizationActionTokenRepository
-                .findByTokenHash(hashedToken)
-                .orElseThrow(() ->
-                        new ServiceException("Invalid or expired token")
-                );
-
-        // Check if the token has already used
-        if(actionToken.getUsedAt() != null){
-            throw new ServiceException("This token has already been used");
-        }
-
-        // Check if the token is expired
-        if(actionToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new ServiceException("This token has expired");
-        }
-
-        // Check if the action matches the expected action
-        if(actionToken.getAction() != expectedAction) {
-            throw new ServiceException("This token is not valid for the expected action");
-        }
-
-        // Get the membership associated with the token
-        Membership membership = actionToken.getMembership();
-
-        // Check if the membership is still pending
-        if(membership.getStatus() != MembershipStatus.PENDING) {
-            throw new ServiceException("This membership is no longer pending");
-        }
-
-        // Update the membership status based on the action
-        if(expectedAction == OrganizationAction.ACCEPT) {
-            membership.setStatus(MembershipStatus.ACTIVE);
-        } else if(expectedAction == OrganizationAction.REJECT) {
-            membership.setStatus(MembershipStatus.REJECTED);
-        }
-
-        // Mark the token as used
-        actionToken.setUsedAt(LocalDateTime.now());
-
-        membershipRepository.save(membership);
-        organizationActionTokenRepository.save(actionToken);
-
-    }
 }

@@ -14,4 +14,9 @@ public interface IEmailService {
             String acceptToken,
             String rejectToken
     ) throws MessagingException;
+    void sendMembershipRequestResultEmail(
+            String to,
+            String organizationName,
+            boolean isAccepted
+    ) throws MessagingException;
 }

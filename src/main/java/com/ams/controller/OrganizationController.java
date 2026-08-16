@@ -107,27 +107,5 @@ public class OrganizationController {
         );
     }
 
-    @PostMapping("/{organizationId}/join")
-    public ResponseEntity<ApiResponse<Void>> requestToJoin(
-            @PathVariable
-            Long organizationId,
-            @RequestBody
-            JoinRequest request,
-            Authentication authentication
-    ) {
 
-        organizationService.requestToJoinOrganization(
-                authentication.getName(),
-                organizationId,
-                request.note()
-        );
-
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        "Join request sent successfully",
-                        null
-                )
-        );
-    }
 }

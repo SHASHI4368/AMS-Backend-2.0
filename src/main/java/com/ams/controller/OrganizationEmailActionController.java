@@ -1,10 +1,8 @@
 package com.ams.controller;
 
-import com.ams.dto.ApiResponse;
 import com.ams.enums.OrganizationAction;
-import com.ams.service.OrganizationService;
+import com.ams.service.MembershipService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,7 +13,7 @@ import org.springframework.web.servlet.ModelAndView;
 @RequestMapping("${api.base-path}/organization-email-actions")
 @RequiredArgsConstructor
 public class OrganizationEmailActionController {
-    private final OrganizationService organizationService;
+    private final MembershipService membershipService;
 
     @GetMapping("/accept")
     public ModelAndView acceptFromEmail(@RequestParam String token) {
@@ -31,7 +29,7 @@ public class OrganizationEmailActionController {
         ModelAndView mav = new ModelAndView("join-request-result");
 
         try {
-            organizationService.processEmailAction(token, action);
+            membershipService.processEmailJoinRequestAction(token, action);
 
             mav.addObject("status", action == OrganizationAction.ACCEPT ? "accepted" : "rejected");
             mav.addObject("message", action == OrganizationAction.ACCEPT

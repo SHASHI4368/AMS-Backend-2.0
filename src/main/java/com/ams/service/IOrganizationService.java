@@ -15,6 +15,5 @@ public interface IOrganizationService {
     OrganizationResponse getOrganizationById(String email, Long organizationId);
     OrganizationResponse updateOrganization(String email, Long organizationId, UpdateOrganizationRequest request);
     PageResponse<OrganizationListResponse> getAllOrganizations(String email, int page, int size, String name);
-    void requestToJoinOrganization(String email, Long organizationId, String note);
-    void processEmailAction(String rawToken, OrganizationAction expectedAction);
+
 }

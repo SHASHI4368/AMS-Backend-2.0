@@ -39,16 +39,12 @@ public class Membership {
     @Column(nullable = false)
     private MembershipStatus status;
 
-    @Column(nullable = false)
     private LocalDateTime joinedAt;
+    private LocalDateTime requestedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrganizationRole role;
 
-    @PrePersist
-    protected void onCreate() {
-        this.joinedAt = LocalDateTime.now();
-    }
 
 }

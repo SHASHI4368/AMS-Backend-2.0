@@ -6,10 +6,12 @@ import com.ams.entity.User;
 import com.ams.enums.MembershipStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
 public interface MembershipRepository extends JpaRepository<Membership, Long> {
     List<Membership> findByUserAndStatus(User user, MembershipStatus status);
     Optional<Membership> findByUserAndOrganization(User user, Organization organization);
+    Optional<Membership> findByStatusAndOrganization(MembershipStatus status, Organization organization);
 }
