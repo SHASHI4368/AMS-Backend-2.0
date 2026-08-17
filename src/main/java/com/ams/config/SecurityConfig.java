@@ -34,6 +34,9 @@ public class SecurityConfig {
     @Value("${api.base-path}")
     private String apiBasePath;
 
+    @Value("${api.frontend-url}")
+    private String allowedOrigin;
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
@@ -48,7 +51,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 apiBasePath + "/auth/**",
-                                apiBasePath + "/organization-email-actions/**"
+                                apiBasePath + "/organization-email-actions/**",
+                                "/ws/**"
                         ).permitAll()
 
                         .requestMatchers(
@@ -97,7 +101,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:3000");
+        configuration.addAllowedOrigin(allowedOrigin);
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);

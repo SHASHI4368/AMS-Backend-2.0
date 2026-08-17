@@ -1,6 +1,7 @@
 api:
   base-path: /api/v1
   backend-url: ${BACKEND_URL}
+  frontend-url: ${FRONTEND_URL}
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${EXPIRATION_TIME}

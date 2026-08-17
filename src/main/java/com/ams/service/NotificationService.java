@@ -1,6 +1,7 @@
 package com.ams.service;
 
 import com.ams.dto.PageResponse;
+import com.ams.dto.notification.NotificationCreatedEvent;
 import com.ams.dto.notification.NotificationResponse;
 import com.ams.entity.Notification;
 import com.ams.entity.User;
@@ -9,6 +10,7 @@ import com.ams.enums.NotificationType;
 import com.ams.repository.NotificationRepository;
 import com.ams.util.ServiceUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,8 +25,10 @@ import java.util.List;
 public class NotificationService implements INotificationService {
     private final NotificationRepository notificationRepository;
     private final ServiceUtil serviceUtil;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
+    @Transactional
     public Notification create(
             User user,
             NotificationType type,
@@ -42,7 +46,15 @@ public class NotificationService implements INotificationService {
                 .message(message)
                 .build();
 
-        return notificationRepository.save(notification);
+        Notification saved = notificationRepository.save(notification);
+
+        // Publish a notification event
+        eventPublisher.publishEvent(new NotificationCreatedEvent(
+                saved.getId(),
+                user.getEmail()
+        ));
+
+        return saved;
     }
 
     @Override
