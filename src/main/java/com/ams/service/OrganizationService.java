@@ -7,15 +7,13 @@ import com.ams.dto.organization.OrganizationResponse;
 import com.ams.dto.organization.UpdateOrganizationRequest;
 import com.ams.entity.Membership;
 import com.ams.entity.Organization;
-import com.ams.entity.OrganizationActionToken;
 import com.ams.entity.User;
 import com.ams.enums.*;
 import com.ams.exception.ServiceException;
 import com.ams.repository.MembershipRepository;
-import com.ams.repository.OrganizationActionTokenRepository;
 import com.ams.repository.OrganizationRepository;
 import com.ams.repository.UserRepository;
-import jakarta.mail.MessagingException;
+import com.ams.util.ServiceUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,26 +31,12 @@ public class OrganizationService implements IOrganizationService {
     private final OrganizationRepository organizationRepository;
     private final MembershipRepository membershipRepository;
     private final UserRepository userRepository;
-
-
-    private User getUser(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new ServiceException("User not found with email: " + email)
-                );
-    }
-
-    private Organization getOrganization(Long organizationId) {
-        return organizationRepository.findById(organizationId)
-                .orElseThrow(() ->
-                        new ServiceException("Organization not found with id: " + organizationId)
-                );
-    }
+    private final ServiceUtil serviceUtil;
 
     @Override
     @Transactional
     public OrganizationResponse createOrganization(String email, OrganizationRequest request) {
-        User owner = getUser(email);
+        User owner = serviceUtil.getUser(email);
 
         Organization organization = Organization.builder()
                 .name(request.name())
@@ -89,7 +72,7 @@ public class OrganizationService implements IOrganizationService {
     @Override
     @Transactional
     public List<OrganizationResponse> getMyOrganizations(String email) {
-        User user = getUser(email);
+        User user = serviceUtil.getUser(email);
 
         List<Membership> memberships = membershipRepository
                 .findByUserAndStatus(user, MembershipStatus.ACTIVE);
@@ -113,9 +96,9 @@ public class OrganizationService implements IOrganizationService {
     @Override
     @Transactional
     public OrganizationResponse getOrganizationById(String email, Long organizationId) {
-        User user = getUser(email);
+        User user = serviceUtil.getUser(email);
 
-        Organization organization = getOrganization(organizationId);
+        Organization organization = serviceUtil.getOrganization(organizationId);
 
         // Check if the user is a member of the organization
         Membership membership = membershipRepository
@@ -145,9 +128,9 @@ public class OrganizationService implements IOrganizationService {
     @Override
     @Transactional
     public OrganizationResponse updateOrganization(String email, Long organizationId, UpdateOrganizationRequest request) {
-        User user = getUser(email);
+        User user = serviceUtil.getUser(email);
 
-        Organization organization = getOrganization(organizationId);
+        Organization organization = serviceUtil.getOrganization(organizationId);
 
         // Check if the user has permission to update the organization
         if(!organization.getOwner().getEmail().equals(email)) {
@@ -177,7 +160,7 @@ public class OrganizationService implements IOrganizationService {
     @Transactional
     public PageResponse<OrganizationListResponse> getAllOrganizations(String email, int page, int size, String name) {
         // Check if the user exists
-        User user = getUser(email);
+        User user = serviceUtil.getUser(email);
 
         // Fetch all organizations with pagination
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));

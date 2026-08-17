@@ -5,6 +5,7 @@ import com.ams.entity.*;
 import com.ams.enums.*;
 import com.ams.exception.ServiceException;
 import com.ams.repository.*;
+import com.ams.util.ServiceUtil;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,38 +26,16 @@ public class MembershipService implements  IMembershipService {
     private final OrganizationActionTokenService organizationActionTokenService;
     private final EmailService emailService;
     private final OrganizationActionTokenRepository organizationActionTokenRepository;
-
-    private User getUser(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new ServiceException("User not found with email: " + email)
-                );
-    }
-
-    private Organization getOrganization(Long organizationId) {
-        return organizationRepository.findById(organizationId)
-                .orElseThrow(() ->
-                        new ServiceException("Organization not found with id: " + organizationId)
-                );
-    }
-
-    private Membership getMembership(Long membershipId) {
-        return membershipRepository.findById(membershipId)
-                .orElseThrow(() ->
-                        new ServiceException("Membership not found with id: " + membershipId)
-                );
-    }
-
-
+    private final ServiceUtil serviceUtil;
 
     @Override
     @Transactional
     public List<MembershipRequestResponse> getPendingRequests(String email, Long organizationId) {
         // Get the user by email
-        User user = getUser(email);
+        User user = serviceUtil.getUser(email);
 
         // Get the organization by ID
-        Organization organization = getOrganization(organizationId);
+        Organization organization = serviceUtil.getOrganization(organizationId);
 
         // Check if the user is the owner of the organization
         if (!organization.getOwner().getId().equals(user.getId())) {
@@ -92,10 +71,10 @@ public class MembershipService implements  IMembershipService {
     @Transactional
     public void requestToJoinOrganization(String email, Long organizationId, String note) {
         // Check if the user exists
-        User user = getUser(email);
+        User user = serviceUtil.getUser(email);
 
         // Check if the organization exists
-        Organization organization = getOrganization(organizationId);
+        Organization organization = serviceUtil.getOrganization(organizationId);
 
         // Check if the user is already a member of the organization
         Optional<Membership> existingMembership =  membershipRepository
@@ -280,7 +259,7 @@ public class MembershipService implements  IMembershipService {
     @Override
     public void respondToJoinRequest(String ownerEmail, Long membershipId, OrganizationAction action) {
         // Get the membership by ID
-        Membership membership = getMembership(membershipId);
+        Membership membership = serviceUtil.getMembership(membershipId);
 
         // Check if the user is the owner of the organization
         if (!membership.getOrganization().getOwner().getEmail().equals(ownerEmail)) {

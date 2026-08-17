@@ -12,6 +12,7 @@ import com.ams.repository.ProfileRepository;
 import com.ams.repository.UserRepository;
 import com.ams.enums.Role;
 import com.ams.util.JwtUtil;
+import com.ams.util.ServiceUtil;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -37,6 +38,7 @@ public class AuthService implements IAuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final ServiceUtil serviceUtil;
 
     @Value("${jwt.expiration}")
     private int maxAge;
@@ -46,9 +48,7 @@ public class AuthService implements IAuthService {
     public void signup(AuthRequest authRequest) {
         // 1. Check if email already exists and email is verified
         if (userRepository.existsByEmail(authRequest.email())) {
-            User existingUser = userRepository.findByEmail(authRequest.email()).orElseThrow(
-                    () -> new ServiceException("User not found")
-            );
+            User existingUser = serviceUtil.getUser(authRequest.email());
             if (existingUser.isEmailVerified()) {
                 throw new ServiceException("Email already exists and is verified");
             }
@@ -118,11 +118,7 @@ public class AuthService implements IAuthService {
     @Override
     public void verifyEmail(VerifyEmailRequest verifyEmailRequest) {
         // 1. Find user
-        User user = userRepository
-                .findByEmail(verifyEmailRequest.email())
-                .orElseThrow(() ->
-                        new ServiceException("User not found")
-                );
+        User user = serviceUtil.getUser(verifyEmailRequest.email());
 
         // 2. Check if user is already verified
         if (user.isEmailVerified()) {
@@ -180,11 +176,7 @@ public class AuthService implements IAuthService {
                         authRequest.password()
                 )
         );
-        User user = userRepository
-                .findByEmail(authRequest.email())
-                .orElseThrow(() ->
-                        new ServiceException("User not found")
-                );
+        User user = serviceUtil.getUser(authRequest.email());
         String jwt = jwtUtil.generateJwtToken(user.getEmail());
         Cookie jwtCookie = new Cookie("jwt", jwt);
         jwtCookie.setHttpOnly(true);
