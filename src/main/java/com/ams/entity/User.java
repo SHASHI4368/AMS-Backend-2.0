@@ -41,6 +41,13 @@ public class User implements UserDetails {
 
     private LocalDateTime verifiedAt;
 
+    @OneToOne(
+            mappedBy = "user",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL
+    )
+    private Profile profile;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(

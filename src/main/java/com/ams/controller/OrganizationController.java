@@ -2,7 +2,9 @@ package com.ams.controller;
 
 import com.ams.dto.ApiResponse;
 import com.ams.dto.PageResponse;
+import com.ams.dto.membership.MembershipResponse;
 import com.ams.dto.organization.*;
+import com.ams.service.MembershipService;
 import com.ams.service.OrganizationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrganizationController {
     private final OrganizationService organizationService;
+    private final MembershipService membershipService;
 
     @PostMapping("/create")
     public ResponseEntity<ApiResponse<OrganizationResponse>> createOrganization(
@@ -107,5 +110,32 @@ public class OrganizationController {
         );
     }
 
+    @GetMapping("/{organizationId}/members")
+    public ResponseEntity<ApiResponse<PageResponse<MembershipResponse>>> getMembers(
+            @PathVariable
+            Long organizationId,
+            @RequestParam(required = false)
+            String search,
+            @RequestParam(value = "page", defaultValue = "0")
+            int page,
+            @RequestParam(value = "size", defaultValue = "10")
+            int size,
+            Authentication authentication
+    ) {
+        PageResponse<MembershipResponse> membershipResponse = membershipService.getOrganizationMembers(
+                authentication.getName(),
+                organizationId,
+                search,
+                page,
+                size
+        );
 
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Members fetched successfully",
+                        membershipResponse
+                )
+        );
+    }
 }

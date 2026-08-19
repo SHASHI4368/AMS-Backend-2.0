@@ -1,6 +1,8 @@
 package com.ams.service;
 
+import com.ams.dto.PageResponse;
 import com.ams.dto.membership.MembershipRequestResponse;
+import com.ams.dto.membership.MembershipResponse;
 import com.ams.entity.*;
 import com.ams.enums.*;
 import com.ams.exception.ServiceException;
@@ -8,6 +10,10 @@ import com.ams.repository.*;
 import com.ams.util.ServiceUtil;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -284,6 +290,71 @@ public class MembershipService implements  IMembershipService {
 
         // Inform the requestor about the result
         informRequestorAboutMembershipResult(membership, action);
+
+    }
+
+    @Override
+    @Transactional
+    public PageResponse<MembershipResponse> getOrganizationMembers(
+            String email,
+            Long organizationId,
+            String search,
+            int page,
+            int size
+    ) {
+        // Check if the user exists
+        User user = serviceUtil.getUser(email);
+
+        // Check if the organization exists
+        Organization organization = serviceUtil.getOrganization(organizationId);
+
+        // Check if the user is a member of the organization
+        Optional<Membership> membershipOpt = membershipRepository.findByUserAndOrganization(user, organization);
+        if (membershipOpt.isEmpty() || membershipOpt.get().getStatus() != MembershipStatus.ACTIVE) {
+            throw new ServiceException("You are not a member of this organization");
+        }
+
+        // Fetch organization members with pagination
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "joinedAt"));
+        Page<Membership> membershipPage = membershipRepository.findOrganizationMembers(organizationId, MembershipStatus.ACTIVE, search, pageable);
+        List<Membership> memberships = membershipPage.getContent();
+
+        // If no members are found, return an empty page response
+        if (memberships.isEmpty()) {
+            return new PageResponse<>(
+                    List.of(),
+                    membershipPage.getNumber(),
+                    membershipPage.getSize(),
+                    membershipPage.getTotalElements(),
+                    membershipPage.getTotalPages(),
+                    membershipPage.isLast()
+            );
+        }
+
+        // Map memberships to MembershipResponse DTOs
+        List<MembershipResponse> membershipResponses = memberships.stream()
+                .map(m -> {
+                    Profile profile = serviceUtil.getProfileByUser(m.getUser());
+                    return new MembershipResponse(
+                            m.getId(),
+                            m.getUser().getEmail(),
+                            profile.getFirstName(),
+                            profile.getLastName(),
+                            profile.getTelephone(),
+                            profile.getAvatarUrl(),
+                            m.getJoinedAt(),
+                            m.getRole().name()
+                    );
+                }).toList();
+
+        return new PageResponse<>(
+                membershipResponses,
+                membershipPage.getNumber(),
+                membershipPage.getSize(),
+                membershipPage.getTotalElements(),
+                membershipPage.getTotalPages(),
+                membershipPage.isLast()
+        );
 
     }
 }
