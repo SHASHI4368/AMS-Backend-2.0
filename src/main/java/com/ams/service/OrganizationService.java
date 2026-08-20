@@ -30,8 +30,8 @@ import java.util.List;
 public class OrganizationService implements IOrganizationService {
     private final OrganizationRepository organizationRepository;
     private final MembershipRepository membershipRepository;
-    private final UserRepository userRepository;
     private final ServiceUtil serviceUtil;
+    private final OrganizationActivityService organizationActivityService;
 
     @Override
     @Transactional
@@ -57,6 +57,14 @@ public class OrganizationService implements IOrganizationService {
                 .build();
 
         membershipRepository.save(membership);
+
+        // Log the organization creation activity
+        organizationActivityService.logActivity(
+                owner,
+                organization,
+                "Organization created by: " + serviceUtil.getUserName(owner),
+                OrganizationActivityType.ORGANIZATION_CREATED
+        );
 
         return new OrganizationResponse(
                 organization.getId(),
@@ -127,7 +135,11 @@ public class OrganizationService implements IOrganizationService {
 
     @Override
     @Transactional
-    public OrganizationResponse updateOrganization(String email, Long organizationId, UpdateOrganizationRequest request) {
+    public OrganizationResponse updateOrganization(
+            String email,
+            Long organizationId,
+            UpdateOrganizationRequest request
+    ) {
         User user = serviceUtil.getUser(email);
 
         Organization organization = serviceUtil.getOrganization(organizationId);
@@ -145,6 +157,14 @@ public class OrganizationService implements IOrganizationService {
 
         organizationRepository.save(organization);
 
+        // Log the organization update activity
+        organizationActivityService.logActivity(
+                user,
+                organization,
+                "Organization updated by: " + serviceUtil.getUserName(user),
+                OrganizationActivityType.ORGANIZATION_UPDATED
+        );
+
         return new OrganizationResponse(
                 organization.getId(),
                 organization.getName(),
@@ -158,7 +178,12 @@ public class OrganizationService implements IOrganizationService {
 
     @Override
     @Transactional
-    public PageResponse<OrganizationListResponse> getAllOrganizations(String email, int page, int size, String name) {
+    public PageResponse<OrganizationListResponse> getAllOrganizations(
+            String email,
+            int page,
+            int size,
+            String name
+    ) {
         // Check if the user exists
         User user = serviceUtil.getUser(email);
 

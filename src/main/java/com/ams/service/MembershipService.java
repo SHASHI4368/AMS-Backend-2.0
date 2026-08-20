@@ -24,15 +24,14 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class MembershipService implements  IMembershipService {
-    private final UserRepository userRepository;
     private final MembershipRepository membershipRepository;
-    private final OrganizationRepository organizationRepository;
     private final ProfileRepository profileRepository;
     private final NotificationService notificationService;
     private final OrganizationActionTokenService organizationActionTokenService;
     private final EmailService emailService;
     private final OrganizationActionTokenRepository organizationActionTokenRepository;
     private final ServiceUtil serviceUtil;
+    private final OrganizationActivityService organizationActivityService;
 
     @Override
     @Transactional
@@ -147,6 +146,14 @@ public class MembershipService implements  IMembershipService {
                     "Failed to send email notification to the organization owner: " + ex.getMessage()
             );
         }
+
+        // Log the activity
+        organizationActivityService.logActivity(
+                user,
+                organization,
+                "User " + user.getEmail() + " requested to join the organization",
+                OrganizationActivityType.JOIN_REQUEST_SENT
+        );
     }
 
     private void createMembershipNotification(
@@ -260,6 +267,15 @@ public class MembershipService implements  IMembershipService {
 
         // Inform the requestor about the result
         informRequestorAboutMembershipResult(membership, expectedAction);
+
+        // Log the activity
+        organizationActivityService.logActivity(
+                membership.getUser(),
+                membership.getOrganization(),
+                "Membership request has been " + expectedAction.name().toLowerCase(),
+                expectedAction == OrganizationAction.ACCEPT ? OrganizationActivityType.JOIN_REQUEST_ACCEPTED :
+                        OrganizationActivityType.JOIN_REQUEST_REJECTED
+        );
     }
 
     @Override
@@ -290,6 +306,15 @@ public class MembershipService implements  IMembershipService {
 
         // Inform the requestor about the result
         informRequestorAboutMembershipResult(membership, action);
+
+        // Log the activity
+        organizationActivityService.logActivity(
+                membership.getUser(),
+                membership.getOrganization(),
+                "Membership request has been " + action.name().toLowerCase(),
+                action == OrganizationAction.ACCEPT ? OrganizationActivityType.JOIN_REQUEST_ACCEPTED :
+                        OrganizationActivityType.JOIN_REQUEST_REJECTED
+        );
 
     }
 

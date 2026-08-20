@@ -49,4 +49,13 @@ public class ServiceUtil {
                         new ServiceException("Notification not found with id: " + notificationId)
                 );
     }
+
+    public String getUserName(User user) {
+        Profile profile = getProfileByUser(user);
+        if(profile.getFirstName() != null || profile.getLastName() != null) {
+            return profile.getFirstName() + " " + profile.getLastName();
+        } else {
+            return user.getEmail();
+        }
+    }
 }
