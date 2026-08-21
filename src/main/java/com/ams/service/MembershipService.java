@@ -117,7 +117,7 @@ public class MembershipService implements  IMembershipService {
                 NotificationTargetType.ORGANIZATION,
                 organization.getId(),
                 "Organization Join Request",
-                "User " + user.getEmail() + " has requested to join your organization: " + organization.getName()
+                user.getEmail() + " has requested to join your organization: " + organization.getName()
         );
 
         // Create emai action tokens
@@ -272,7 +272,7 @@ public class MembershipService implements  IMembershipService {
         organizationActivityService.logActivity(
                 membership.getUser(),
                 membership.getOrganization(),
-                "Membership request has been " + expectedAction.name().toLowerCase(),
+                "Membership request of" + membership.getUser() + " has been " + expectedAction.name().toLowerCase(),
                 expectedAction == OrganizationAction.ACCEPT ? OrganizationActivityType.JOIN_REQUEST_ACCEPTED :
                         OrganizationActivityType.JOIN_REQUEST_REJECTED
         );
@@ -311,7 +311,7 @@ public class MembershipService implements  IMembershipService {
         organizationActivityService.logActivity(
                 membership.getUser(),
                 membership.getOrganization(),
-                "Membership request has been " + action.name().toLowerCase(),
+                "Membership request of" + membership.getUser() + " has been " + action.name().toLowerCase(),
                 action == OrganizationAction.ACCEPT ? OrganizationActivityType.JOIN_REQUEST_ACCEPTED :
                         OrganizationActivityType.JOIN_REQUEST_REJECTED
         );
@@ -340,8 +340,10 @@ public class MembershipService implements  IMembershipService {
         }
 
         // Fetch organization members with pagination
+        String normalizedSearch = search == null ? "" : search.trim();
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "joinedAt"));
-        Page<Membership> membershipPage = membershipRepository.findOrganizationMembers(organizationId, MembershipStatus.ACTIVE, search, pageable);
+        Page<Membership> membershipPage = membershipRepository
+                .findOrganizationMembers(organizationId, MembershipStatus.ACTIVE, normalizedSearch, pageable);
         List<Membership> memberships = membershipPage.getContent();
 
         // If no members are found, return an empty page response

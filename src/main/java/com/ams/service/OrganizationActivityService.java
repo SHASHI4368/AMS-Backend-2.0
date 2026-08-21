@@ -51,9 +51,7 @@ public class OrganizationActivityService implements  IOrganizationActivityServic
         Organization organization = serviceUtil.getOrganization(organizationId);
 
         // Check if the user is the owner of the organization
-        if (!organization.getOwner().getId().equals(user.getId())) {
-            throw new SecurityException("User is not the owner of the organization");
-        }
+        serviceUtil.isUserOwnerOfOrganization(user,organization);
 
         // Fetch the organization activities with pagination
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));

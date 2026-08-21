@@ -58,4 +58,8 @@ public class ServiceUtil {
             return user.getEmail();
         }
     }
+
+    public boolean isUserOwnerOfOrganization(User user, Organization organization) {
+        return organization.getOwner().getId().equals(user.getId());
+    }
 }

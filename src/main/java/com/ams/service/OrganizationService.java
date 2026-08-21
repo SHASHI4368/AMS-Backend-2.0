@@ -145,11 +145,7 @@ public class OrganizationService implements IOrganizationService {
         Organization organization = serviceUtil.getOrganization(organizationId);
 
         // Check if the user has permission to update the organization
-        if(!organization.getOwner().getEmail().equals(email)) {
-            throw new ServiceException(
-                    "You do not have permission to update this organization with id: " + organizationId
-            );
-        }
+        serviceUtil.isUserOwnerOfOrganization(user, organization);
 
         organization.setName(request.name());
         organization.setDescription(request.description());
