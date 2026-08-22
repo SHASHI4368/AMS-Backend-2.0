@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Request Result</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f5f7; font-family:'Segoe UI', Arial, sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:60px 0;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="480" cellpadding="0" cellspacing="0"
+                   style="background-color:#ffffff; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.08); text-align:center; padding:48px 32px;">
+                <tr>
+                    <td>
+                        <div th:if="${status == 'accepted'}" style="font-size:40px;">✅</div>
+                        <div th:if="${status == 'rejected'}" style="font-size:40px;">🚫</div>
+                        <div th:if="${status == 'error'}" style="font-size:40px;">⚠️</div>
+
+                        <h2 style="margin:20px 0 8px 0; color:#111827;" th:text="${status == 'accepted'} ? 'Invitation Accepted' : (${status == 'rejected'} ? 'Invitation Rejected' : 'Something Went Wrong')"></h2>
+
+                        <p style="color:#6b7280; font-size:15px;" th:text="${message}"></p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

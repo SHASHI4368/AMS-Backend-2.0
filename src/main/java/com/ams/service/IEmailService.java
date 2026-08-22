@@ -6,6 +6,7 @@ import jakarta.mail.MessagingException;
 
 public interface IEmailService {
     void sendVerificationEmail(String to, String code) throws MessagingException;
+
     void sendOrganizationJoinRequestEmail(
             String ownerEmail,
             User requestor,
@@ -14,7 +15,23 @@ public interface IEmailService {
             String acceptToken,
             String rejectToken
     ) throws MessagingException;
+
+    void sendOrganizationInvitationEmail(
+            String invitedUserEmail,
+            User owner,
+            String note,
+            Organization organization,
+            String acceptToken,
+            String rejectToken
+    ) throws MessagingException;
+
     void sendMembershipRequestResultEmail(
+            String to,
+            String organizationName,
+            boolean isAccepted
+    ) throws MessagingException;
+
+    void sendInvitationResultEmail(
             String to,
             String organizationName,
             boolean isAccepted

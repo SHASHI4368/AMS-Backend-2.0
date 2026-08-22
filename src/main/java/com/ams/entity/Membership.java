@@ -41,6 +41,7 @@ public class Membership {
 
     private LocalDateTime joinedAt;
     private LocalDateTime requestedAt;
+    private LocalDateTime invitedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

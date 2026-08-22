@@ -22,6 +22,13 @@ public class ServiceUtil {
                 );
     }
 
+    public User getUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new ServiceException("User not found with id: " + userId)
+                );
+    }
+
     public Organization getOrganization(Long organizationId) {
         return organizationRepository.findById(organizationId)
                 .orElseThrow(() ->
@@ -59,7 +66,11 @@ public class ServiceUtil {
         }
     }
 
-    public boolean isUserOwnerOfOrganization(User user, Organization organization) {
-        return organization.getOwner().getId().equals(user.getId());
+    public void isUserOwnerOfOrganization(User user, Organization organization) {
+        if(!organization.getOwner().getId().equals(user.getId())){
+            throw new ServiceException("User is not the owner of the organization");
+        }
     }
+
+
 }

@@ -16,16 +16,26 @@ public class OrganizationEmailActionController {
     private final MembershipService membershipService;
 
     @GetMapping("/accept")
-    public ModelAndView acceptFromEmail(@RequestParam String token) {
-        return handleEmailAction(token, OrganizationAction.ACCEPT);
+    public ModelAndView acceptRequestFromEmail(@RequestParam String token) {
+        return handleEmailRequestAction(token, OrganizationAction.ACCEPT);
     }
 
     @GetMapping("/reject")
-    public ModelAndView rejectFromEmail(@RequestParam String token) {
-        return handleEmailAction(token, OrganizationAction.REJECT);
+    public ModelAndView rejectRequestFromEmail(@RequestParam String token) {
+        return handleEmailRequestAction(token, OrganizationAction.REJECT);
     }
 
-    private ModelAndView handleEmailAction(String token, OrganizationAction action) {
+    @GetMapping("/invitation/accept")
+    public ModelAndView acceptInvitationFromEmail(@RequestParam String token) {
+        return handleEmailInvitationAction(token, OrganizationAction.ACCEPT);
+    }
+
+    @GetMapping("/invitation/reject")
+    public ModelAndView rejectInvitationFromEmail(@RequestParam String token) {
+        return handleEmailInvitationAction(token, OrganizationAction.REJECT);
+    }
+
+    private ModelAndView handleEmailRequestAction(String token, OrganizationAction action) {
         ModelAndView mav = new ModelAndView("join-request-result");
 
         try {
@@ -35,6 +45,24 @@ public class OrganizationEmailActionController {
             mav.addObject("message", action == OrganizationAction.ACCEPT
                     ? "The join request has been accepted."
                     : "The join request has been rejected.");
+        } catch (Exception e) {
+            mav.addObject("status", "error");
+            mav.addObject("message", "This link is invalid or has already been used.");
+        }
+
+        return mav;
+    }
+
+    private ModelAndView handleEmailInvitationAction(String token, OrganizationAction action) {
+        ModelAndView mav = new ModelAndView("invitation-result");
+
+        try {
+            membershipService.processEmailInvitationAction(token, action);
+
+            mav.addObject("status", action == OrganizationAction.ACCEPT ? "accepted" : "rejected");
+            mav.addObject("message", action == OrganizationAction.ACCEPT
+                    ? "The invitation has been accepted."
+                    : "The invitation has been rejected.");
         } catch (Exception e) {
             mav.addObject("status", "error");
             mav.addObject("message", "This link is invalid or has already been used.");
